@@ -5,7 +5,7 @@
 
   <!-- Public plugin name should be written in Title Case.
        Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
-  <name>WebpackIntellijModule</name>
+  <name>Project Module as Webpack Module</name>
 
   <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
   <vendor email="anoscillator@gmail.com" url="https://blep.me">Sergei Lomachev</vendor>
@@ -14,17 +14,15 @@
        Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
        Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
   <description><![CDATA[
-    Allows you to add JS Node package to Modules of the Project and webpack will use it instead of one from package.json
+    The plugin allows you to add an NPM package as a module to your Idea project to develop it together.
+    For use with companion webpack plugin `webpack-intellij-module-plugin`
+    Complete guide available at https://github.com/Silvman/WebpackIntellijModulePluginIU
   ]]></description>
 
   <!-- Product and plugin compatibility requirements.
        Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
   <depends>com.intellij.modules.platform</depends>
   <depends>JavaScript</depends>
-
-  <extensions defaultExtensionNs="JavaScript">
-<!--    <moduleReferenceContributor implementation="me.blep.intellij.plugin.webpackmodule.WebpackIntellijModuleJSModuleReferenceContributor"/>-->
-  </extensions>
 
   <applicationListeners>
 
