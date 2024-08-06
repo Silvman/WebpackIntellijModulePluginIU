@@ -1,4 +1,4 @@
-# Webpack Intellij Module Plugin for Intellij Idea Ultimate
+# Project Module as Webpack Module Plugin for Intellij Idea Ultimate
 
 The plugin allows you to add an NPM package as a module to your Idea project to develop it together.
 
