@@ -37,8 +37,8 @@ tasks {
   }
 
   signPlugin {
-    certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-    privateKey.set(System.getenv("PRIVATE_KEY"))
+    certificateChainFile.set(file("signing/chain.crt"))
+    privateKeyFile.set(file("signing/private.pem"))
     password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
   }
 
