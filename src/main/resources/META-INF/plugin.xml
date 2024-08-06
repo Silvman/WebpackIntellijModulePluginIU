@@ -1,0 +1,53 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+  <!-- Unique identifier of the plugin. It should be FQN. It cannot be changed between the plugin versions. -->
+  <id>me.blep.WebpackIntellijModulePlugin</id>
+
+  <!-- Public plugin name should be written in Title Case.
+       Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-name -->
+  <name>WebpackIntellijModule</name>
+
+  <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
+  <vendor email="anoscillator@gmail.com" url="https://blep.me">Sergei Lomachev</vendor>
+
+  <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
+       Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
+       Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+  <description><![CDATA[
+    Allows you to add JS Node package to Modules of the Project and webpack will use it instead of one from package.json
+  ]]></description>
+
+  <!-- Product and plugin compatibility requirements.
+       Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
+  <depends>com.intellij.modules.platform</depends>
+  <depends>JavaScript</depends>
+
+  <extensions defaultExtensionNs="JavaScript">
+<!--    <moduleReferenceContributor implementation="me.blep.intellij.plugin.webpackmodule.WebpackIntellijModuleJSModuleReferenceContributor"/>-->
+  </extensions>
+
+  <applicationListeners>
+
+    <listener
+            class="me.blep.intellij.plugin.webpackmodule.listener.WebpackIntellijModuleProjectManagerListener"
+            topic="com.intellij.openapi.project.ProjectManagerListener"
+    />
+
+  </applicationListeners>
+
+
+  <projectListeners>
+
+    <listener
+            class="me.blep.intellij.plugin.webpackmodule.listener.WebpackIntellijModuleModuleListener"
+            topic="com.intellij.openapi.project.ModuleListener"
+    />
+
+    <listener
+            class="me.blep.intellij.plugin.webpackmodule.listener.WebpackIntellijModulePackageJsonChangeListener"
+            topic="com.intellij.javascript.nodejs.packageJson.PackageJsonFileManager$PackageJsonChangeListener"
+    />
+
+  </projectListeners>
+
+</idea-plugin>
