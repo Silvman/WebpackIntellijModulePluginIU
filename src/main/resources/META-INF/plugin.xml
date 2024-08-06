@@ -41,11 +41,6 @@
             topic="com.intellij.openapi.project.ModuleListener"
     />
 
-    <listener
-            class="me.blep.intellij.plugin.webpackmodule.listener.WebpackIntellijModulePackageJsonChangeListener"
-            topic="com.intellij.javascript.nodejs.packageJson.PackageJsonFileManager$PackageJsonChangeListener"
-    />
-
   </projectListeners>
 
 </idea-plugin>
