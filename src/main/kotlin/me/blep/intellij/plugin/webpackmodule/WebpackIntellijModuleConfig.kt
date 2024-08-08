@@ -141,40 +141,31 @@ class WebpackIntellijModuleConfig private constructor() {
                 if (packageJsonData.name != null) {
                     providedDependency[packageJsonData.name!!] = module
                 }
-                break
             }
         }
 
         val moduleToProvidedDependencyList = HashMap<Module, ArrayList<Pair<String, String>>>()
         for ((packageName, providedDepModule) in providedDependency) {
             val providedDepDir = findPackageJsonDir(providedDepModule)
-            val providedDepPath = providedDepDir?.toNioPath()?.absolutePathString()
+            val providedDepPath = providedDepDir?.toNioPath()?.absolutePathString() ?: continue
             try {
                 val modules = reverseDeps[packageName];
                 if (!modules.isNullOrEmpty()) {
                     for (m2 in modules) {
+                        moduleToProvidedDependencyList.putIfAbsent(m2, ArrayList())
+                        moduleToProvidedDependencyList[m2]?.add(Pair(packageName, providedDepPath))
                         val moduleDir = findPackageJsonDir(m2)
-                        try {
-                            moduleToProvidedDependencyList.putIfAbsent(m2, ArrayList())
-                            if (providedDepPath != null) {
-                                moduleToProvidedDependencyList[m2]?.add(Pair(packageName, providedDepPath))
-                                val packageJsonData = getPackageJsonData(providedDepModule)
-                                if (packageJsonData != null) {
-                                    for (allDependencyEntry in packageJsonData.allDependencyEntries) {
-                                        if (providedDependency.containsKey(allDependencyEntry.key)) {
-                                            continue;
-                                        }
-                                        val fileByRelativePath = moduleDir?.findChild("node_modules")?.findFileByRelativePath(allDependencyEntry.key)
-                                        if (fileByRelativePath != null) {
-                                            moduleToProvidedDependencyList[m2]?.add(Pair(allDependencyEntry.key, fileByRelativePath.toNioPath().absolutePathString()))
-                                        }
-                                    }
+                        val packageJsonData = getPackageJsonData(providedDepModule)
+                        if (packageJsonData != null) {
+                            for (allDependencyEntry in packageJsonData.allDependencyEntries) {
+                                if (providedDependency.containsKey(allDependencyEntry.key)) {
+                                    continue;
                                 }
-                            } else {
-                                LOG.warn("couldn't find package dir of module " + providedDepModule.name + " required from " + m2.name)
+                                val fileByRelativePath = moduleDir?.findChild(NodeModuleNamesUtil.MODULES)?.findFileByRelativePath(allDependencyEntry.key)
+                                if (fileByRelativePath != null) {
+                                    moduleToProvidedDependencyList[m2]?.add(Pair(allDependencyEntry.key, fileByRelativePath.toNioPath().absolutePathString()))
+                                }
                             }
-                        } catch (ex: Exception) {
-                            LOG.warn("error in processing dependants of module " + providedDepModule.name, ex)
                         }
                     }
                 }
