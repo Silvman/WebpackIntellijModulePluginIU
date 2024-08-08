@@ -3,16 +3,9 @@ package me.blep.intellij.plugin.webpackmodule
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.json.JsonReadFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.google.gson.Gson
 import com.intellij.javascript.nodejs.PackageJsonData
 import com.intellij.json.psi.JsonFile
-import com.intellij.json.psi.JsonObject
-import com.intellij.json.psi.JsonProperty
-import com.intellij.json.psi.JsonPsiUtil
-import com.intellij.json.psi.impl.JsonPropertyImpl
-import com.intellij.json.psi.impl.JsonPsiImplUtils
 import com.intellij.lang.javascript.ui.NodeModuleNamesUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
@@ -25,10 +18,8 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.io.isAncestor
-import com.jetbrains.rd.framework.base.deepClonePolymorphic
 import me.blep.intellij.plugin.webpackmodule.helper.MyPrettyPrinter
 import java.util.regex.Pattern
 import kotlin.io.path.absolutePathString
@@ -121,53 +112,65 @@ class WebpackIntellijModuleConfig private constructor() {
         return true;
     }
 
+    fun getPackageJsonData(module: Module): PackageJsonData? {
+        val rootManager = ModuleRootManager.getInstance(module)
+        try {
+            for (contentRoot in rootManager.contentRoots) {
+                val packageJson = contentRoot.findChild(NodeModuleNamesUtil.PACKAGE_JSON)
+                if (packageJson != null) {
+                    return PackageJsonData.getOrCreate(packageJson)
+                }
+            }
+        } catch (ex: Exception) {
+            LOG.error("error on locating npm package in module=" + module.name + "; project=" + module.project.name, ex)
+        }
+        return null
+    }
+
     fun getProjectConfig(project: Project): HashMap<Module, ArrayList<Pair<String, String>>> {
         val reverseDeps = HashMap<String, ArrayList<Module>>()
         val providedDependency = HashMap<String, Module>()
 
         for (module in project.modules) {
-            val rootManager = ModuleRootManager.getInstance(module)
-            try {
-                for (contentRoot in rootManager.contentRoots) {
-                    val packageJson = contentRoot.findChild(NodeModuleNamesUtil.PACKAGE_JSON)
-                    if (packageJson != null) {
-                        val packageJsonData = PackageJsonData.getOrCreate(packageJson)
-                        for (allDependencyEntry in packageJsonData.allDependencyEntries) {
-                            reverseDeps.putIfAbsent(allDependencyEntry.key, ArrayList())
-                            reverseDeps[allDependencyEntry.key]?.add(module)
-                        }
-                        if (packageJsonData.name != null) {
-                            providedDependency[packageJsonData.name!!] = module
-                        }
-                        break
-                    }
+            val packageJsonData = getPackageJsonData(module)
+            if (packageJsonData != null) {
+                for (allDependencyEntry in packageJsonData.allDependencyEntries) {
+                    reverseDeps.putIfAbsent(allDependencyEntry.key, ArrayList())
+                    reverseDeps[allDependencyEntry.key]?.add(module)
                 }
-            } catch (ex: Exception) {
-                LOG.error("error on locating npm package in module=" + module.name + "; project=" + project.name, ex)
+                if (packageJsonData.name != null) {
+                    providedDependency[packageJsonData.name!!] = module
+                }
             }
         }
 
         val moduleToProvidedDependencyList = HashMap<Module, ArrayList<Pair<String, String>>>()
-        for ((packageName, module) in providedDependency) {
+        for ((packageName, providedDepModule) in providedDependency) {
+            val providedDepDir = findPackageJsonDir(providedDepModule)
+            val providedDepPath = providedDepDir?.toNioPath()?.absolutePathString() ?: continue
             try {
                 val modules = reverseDeps[packageName];
                 if (!modules.isNullOrEmpty()) {
                     for (m2 in modules) {
-                        try {
-                            moduleToProvidedDependencyList.putIfAbsent(m2, ArrayList())
-                            val directoryRoot = findPackageJsonDir(module)
-                            if (directoryRoot?.toNioPath()?.absolutePathString() != null) {
-                                moduleToProvidedDependencyList[m2]?.add(Pair(packageName, directoryRoot.toNioPath().absolutePathString()))
-                            } else {
-                                LOG.warn("couldn't find package dir of module " + module.name + " required from " + m2.name)
+                        moduleToProvidedDependencyList.putIfAbsent(m2, ArrayList())
+                        moduleToProvidedDependencyList[m2]?.add(Pair(packageName, providedDepPath))
+                        val moduleDir = findPackageJsonDir(m2)
+                        val packageJsonData = getPackageJsonData(providedDepModule)
+                        if (packageJsonData != null) {
+                            for (allDependencyEntry in packageJsonData.allDependencyEntries) {
+                                if (providedDependency.containsKey(allDependencyEntry.key)) {
+                                    continue;
+                                }
+                                val fileByRelativePath = moduleDir?.findChild(NodeModuleNamesUtil.MODULES)?.findFileByRelativePath(allDependencyEntry.key)
+                                if (fileByRelativePath != null) {
+                                    moduleToProvidedDependencyList[m2]?.add(Pair(allDependencyEntry.key, fileByRelativePath.toNioPath().absolutePathString()))
+                                }
                             }
-                        } catch (ex: Exception) {
-                            LOG.warn("error in processing dependants of module " + module.name, ex)
                         }
                     }
                 }
             } catch (ex: Exception) {
-                LOG.warn("error in processing dependants of " + module.name, ex)
+                LOG.warn("error in processing dependants of " + providedDepModule.name, ex)
             }
         }
 
