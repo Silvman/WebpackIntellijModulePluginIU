@@ -187,6 +187,7 @@ class WebpackIntellijModuleConfig private constructor() {
         for (module in project.modules) {
             try {
                 val webpackConfigDir = findWebpackConfigDir(module)
+                val packageJsonDir = findPackageJsonDir(module)
                 if (webpackConfigDir != null) {
                     val webpackPluginFile = webpackConfigDir.toNioPath().toFile().resolve(WEBPACK_INTELLIJ_MODULE_FILE)
                     val tsConfigFile = webpackConfigDir.toNioPath().toFile().resolve(TS_CONFIG_FILE)
@@ -252,7 +253,7 @@ class WebpackIntellijModuleConfig private constructor() {
                                 val packageJsonFile = moduleDir?.findChild(NodeModuleNamesUtil.PACKAGE_JSON)
                                 val packageJsonData =  PackageJsonData.getOrCreate(packageJsonFile!!)
                                 for (allDependencyEntry in packageJsonData.allDependencyEntries) {
-                                    val fileByRelativePath = moduleDir.findChild(NodeModuleNamesUtil.MODULES)?.findFileByRelativePath(allDependencyEntry.key)
+                                    val fileByRelativePath = packageJsonDir?.findChild(NodeModuleNamesUtil.MODULES)?.findFileByRelativePath(allDependencyEntry.key)
                                     if (fileByRelativePath != null) {
                                         fixedAlias[allDependencyEntry.key] = fileByRelativePath.toNioPath().absolutePathString()
                                     }
