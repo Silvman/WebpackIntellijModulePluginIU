@@ -9,4 +9,5 @@ class WebpackIntellijModuleProjectManagerListener: ProjectManagerListener {
         WebpackIntellijModuleConfig.INSTANCE.init(project)
         WebpackIntellijModuleConfig.INSTANCE.updateProject(project)
     }
+
 }

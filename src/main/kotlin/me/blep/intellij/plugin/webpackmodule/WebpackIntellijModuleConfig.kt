@@ -73,12 +73,12 @@ class WebpackIntellijModuleConfig private constructor() {
         cache[project] = moduleToProvidedDependencyList
     }
 
-    fun updateProject(project: Project) {
+    fun updateProject(project: Project, force: Boolean = false) {
         val cachedConfig = cache[project]
         val projectConfig = getProjectConfig(project)
         val equal = isEqual(cachedConfig, projectConfig)
         LOG.debug("updateProject " + project.name + "; equal=" + equal)
-        if (!equal) {
+        if (!equal || force) {
             cache[project] = projectConfig;
             updateJson(project, cachedConfig)
         }

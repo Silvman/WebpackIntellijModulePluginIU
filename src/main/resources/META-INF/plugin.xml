@@ -43,4 +43,11 @@
 
   </projectListeners>
 
+    <actions>
+        <action id="me.blep.intellij.plugin.webpackmodule.action.UpdateConfigAction"
+                class="me.blep.intellij.plugin.webpackmodule.action.UpdateConfigAction"
+                text="Update Webpack Modules">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
 </idea-plugin>
