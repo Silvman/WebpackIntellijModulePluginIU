@@ -16,12 +16,14 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.io.isAncestor
 import me.blep.intellij.plugin.webpackmodule.helper.MyPrettyPrinter
 import java.util.regex.Pattern
+import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
 class WebpackIntellijModuleConfig private constructor() {
@@ -154,19 +156,6 @@ class WebpackIntellijModuleConfig private constructor() {
                     for (m2 in modules) {
                         moduleToProvidedDependencyList.putIfAbsent(m2, ArrayList())
                         moduleToProvidedDependencyList[m2]?.add(Pair(packageName, providedDepPath))
-                        val moduleDir = findPackageJsonDir(m2)
-                        val packageJsonData = getPackageJsonData(providedDepModule)
-                        if (packageJsonData != null) {
-                            for (allDependencyEntry in packageJsonData.allDependencyEntries) {
-                                if (providedDependency.containsKey(allDependencyEntry.key)) {
-                                    continue;
-                                }
-                                val fileByRelativePath = moduleDir?.findChild(NodeModuleNamesUtil.MODULES)?.findFileByRelativePath(allDependencyEntry.key)
-                                if (fileByRelativePath != null) {
-                                    moduleToProvidedDependencyList[m2]?.add(Pair(allDependencyEntry.key, fileByRelativePath.toNioPath().absolutePathString()))
-                                }
-                            }
-                        }
                     }
                 }
             } catch (ex: Exception) {
@@ -254,8 +243,25 @@ class WebpackIntellijModuleConfig private constructor() {
 
                     try {
                         if (alias.isNotEmpty() || webpackPluginFile.exists()) {
+                            val fixedAlias = HashMap<String, String>()
+
+                            for (alias1 in alias) {
+                                val packageName = alias1.key
+                                val path = alias1.value
+                                val moduleDir = VirtualFileManager.getInstance().findFileByNioPath(Path(path))
+                                val packageJsonFile = moduleDir?.findChild(NodeModuleNamesUtil.PACKAGE_JSON)
+                                val packageJsonData =  PackageJsonData.getOrCreate(packageJsonFile!!)
+                                for (allDependencyEntry in packageJsonData.allDependencyEntries) {
+                                    val fileByRelativePath = moduleDir.findChild(NodeModuleNamesUtil.MODULES)?.findFileByRelativePath(allDependencyEntry.key)
+                                    if (fileByRelativePath != null) {
+                                        fixedAlias[allDependencyEntry.key] = fileByRelativePath.toNioPath().absolutePathString()
+                                    }
+                                }
+                                fixedAlias[packageName] = path
+                            }
+
                             val resolve = HashMap<String, Any>()
-                            resolve["alias"] = alias
+                            resolve["alias"] = fixedAlias
                             val file = HashMap<String, Any>()
                             file["resolve"] = resolve
                             if (!webpackPluginFile.exists()) {
