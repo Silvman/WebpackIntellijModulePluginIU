@@ -247,7 +247,6 @@ class WebpackIntellijModuleConfig private constructor() {
                             val fixedAlias = HashMap<String, String>()
 
                             for (alias1 in alias) {
-                                val packageName = alias1.key
                                 val path = alias1.value
                                 val moduleDir = VirtualFileManager.getInstance().findFileByNioPath(Path(path))
                                 val packageJsonFile = moduleDir?.findChild(NodeModuleNamesUtil.PACKAGE_JSON)
@@ -258,8 +257,9 @@ class WebpackIntellijModuleConfig private constructor() {
                                         fixedAlias[allDependencyEntry.key] = fileByRelativePath.toNioPath().absolutePathString()
                                     }
                                 }
-                                fixedAlias[packageName] = path
                             }
+
+                            fixedAlias.putAll(alias)
 
                             val resolve = HashMap<String, Any>()
                             resolve["alias"] = fixedAlias
