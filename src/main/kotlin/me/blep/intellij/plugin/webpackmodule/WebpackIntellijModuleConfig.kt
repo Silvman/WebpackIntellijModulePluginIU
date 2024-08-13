@@ -236,7 +236,11 @@ class WebpackIntellijModuleConfig private constructor() {
                                     compilerOptions.remove("paths")
                                 }
                             }
-                            writer.writeValue(tsConfigFile, jsonNode)
+                            val writeValueAsString = writer.writeValueAsString(jsonNode)
+                            if (writeValueAsString != null) {
+                                tsConfigFile.writeText(writeValueAsString)
+                                VirtualFileManager.getInstance().refreshAndFindFileByNioPath(tsConfigFile.toPath())
+                            }
                         }
                     } catch (a: Exception) {
                         LOG.error("${module.name}: error on update $TS_CONFIG_FILE", a)
@@ -268,7 +272,11 @@ class WebpackIntellijModuleConfig private constructor() {
                             if (!webpackPluginFile.exists()) {
                                 webpackPluginFile.createNewFile()
                             }
-                            writer.writeValue(webpackPluginFile, file)
+                            val writeValueAsString = writer.writeValueAsString(file)
+                            if (writeValueAsString != null) {
+                                webpackPluginFile.writeText(writeValueAsString)
+                                VirtualFileManager.getInstance().refreshAndFindFileByNioPath(webpackPluginFile.toPath())
+                            }
                         }
                     } catch (a: Exception) {
                         LOG.error("${module.name}: error on update $WEBPACK_INTELLIJ_MODULE_FILE", a)
