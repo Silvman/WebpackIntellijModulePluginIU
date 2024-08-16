@@ -3,6 +3,7 @@ package me.blep.intellij.plugin.webpackmodule
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.json.JsonReadFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.javascript.nodejs.PackageJsonData
 import com.intellij.json.psi.JsonFile
@@ -223,14 +224,33 @@ class WebpackIntellijModuleConfig private constructor() {
                                     compilerOptions.set("paths", objectMapper.createObjectNode()) as ObjectNode
                                 }
                                 val paths = compilerOptions.get("paths") as ObjectNode
-                                for ((key) in oldAlias) {
-                                    paths.remove(key)
+                                val autoFields = ArrayList<String>()
+                                for (field in paths.fields()) {
+                                    val key = field.key
+                                    if (field.value is ArrayNode) {
+                                        val arrayNode = field.value as ArrayNode
+                                        for (jsonNode1 in arrayNode) {
+                                            if (jsonNode1.isTextual && jsonNode1.asText().equals(WEBPACK_INTELLIJ_MODULE_FILE)) {  // marker
+                                                autoFields.add(key)
+                                            }
+                                        }
+                                    }
+                                }
+                                for (autoField in autoFields) {
+                                    paths.remove(autoField)
                                 }
                                 for ((key, value) in alias) {
                                     val arrayNode = objectMapper.createArrayNode()
                                     arrayNode.add(value)
                                     arrayNode.add("./node_modules/$key")
+                                    arrayNode.add(WEBPACK_INTELLIJ_MODULE_FILE) // just marker
                                     paths.set(key, arrayNode) as ObjectNode
+                                }
+                                if (alias.isNotEmpty() && packageJsonDir?.findFileByRelativePath("node_modules/@types/react") != null) {
+                                    val arrayNode = objectMapper.createArrayNode()
+                                    arrayNode.add("./node_modules/@types/react");
+                                    arrayNode.add(WEBPACK_INTELLIJ_MODULE_FILE) // just marker
+                                    paths.set("react", arrayNode) as ObjectNode
                                 }
                                 if (paths.isEmpty) {
                                     compilerOptions.remove("paths")
