@@ -37,6 +37,7 @@ class WebpackIntellijModuleConfig private constructor() {
 //        val TSCONFIG_INTELLIJ_MODULE_FILE = "tsconfig.intellij-module.json"
         val WEBPACK_CONFIG_FILE = "webpack.config.js"
         val TS_CONFIG_FILE = "tsconfig.json"
+        val TS_CONFIG_MARKER = "from-intellij-module-plugin"
     }
 
     private val cache: HashMap<Project, HashMap<Module, ArrayList<Pair<String, String>>>> = HashMap()
@@ -229,7 +230,7 @@ class WebpackIntellijModuleConfig private constructor() {
                                     if (field.value is ArrayNode) {
                                         val arrayNode = field.value as ArrayNode
                                         for (jsonNode1 in arrayNode) {
-                                            if (jsonNode1.isTextual && jsonNode1.asText().equals(WEBPACK_INTELLIJ_MODULE_FILE)) {  // marker
+                                            if (jsonNode1.isTextual && jsonNode1.asText().equals(TS_CONFIG_MARKER)) {  // marker
                                                 autoFields.add(key)
                                             }
                                         }
@@ -242,13 +243,13 @@ class WebpackIntellijModuleConfig private constructor() {
                                     val arrayNode = objectMapper.createArrayNode()
                                     arrayNode.add(value)
                                     arrayNode.add("./node_modules/$key")
-                                    arrayNode.add(WEBPACK_INTELLIJ_MODULE_FILE) // just marker
+                                    arrayNode.add(TS_CONFIG_MARKER) // just marker
                                     paths.set(key, arrayNode) as ObjectNode
                                 }
                                 if (alias.isNotEmpty() && packageJsonDir?.findFileByRelativePath("node_modules/@types/react") != null) {
                                     val arrayNode = objectMapper.createArrayNode()
                                     arrayNode.add("./node_modules/@types/react");
-                                    arrayNode.add(WEBPACK_INTELLIJ_MODULE_FILE) // just marker
+                                    arrayNode.add(TS_CONFIG_MARKER) // just marker
                                     paths.set("react", arrayNode) as ObjectNode
                                 }
                                 if (paths.isEmpty) {
