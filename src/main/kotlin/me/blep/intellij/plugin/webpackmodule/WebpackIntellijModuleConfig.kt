@@ -83,7 +83,7 @@ class WebpackIntellijModuleConfig private constructor() {
         LOG.debug("updateProject " + project.name + "; equal=" + equal)
         if (!equal || force) {
             cache[project] = projectConfig;
-            updateJson(project, cachedConfig)
+            updateJson(project)
         }
     }
 
@@ -184,7 +184,7 @@ class WebpackIntellijModuleConfig private constructor() {
         return alias
     }
 
-    fun updateJson(project: Project, oldMappings: HashMap<Module, ArrayList<Pair<String, String>>>?) {
+    fun updateJson(project: Project) {
         for (module in project.modules) {
             try {
                 val webpackConfigDir = findWebpackConfigDir(module)
@@ -209,7 +209,6 @@ class WebpackIntellijModuleConfig private constructor() {
 
                     val writer = objectMapper.writer(MyPrettyPrinter(indent))
                     val alias = getAliases(cache[project]?.get(module))
-                    val oldAlias = getAliases(oldMappings?.get(module))
 
                     try {
                         if (tsConfigFile.exists()) {
